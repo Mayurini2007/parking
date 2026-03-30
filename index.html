@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ParkEase — Smart Parking Reservations</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #111827;
+    --bg3: #1a2235;
+    --card: #141c2e;
+    --border: rgba(255,255,255,0.08);
+    --accent: #00e5a0;
+    --accent2: #0099ff;
+    --danger: #ff4f5e;
+    --warn: #ffb300;
+    --text: #e8edf5;
+    --muted: #7a8499;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+
+  /* NAV */
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 2.5rem; background: rgba(10,14,26,0.95); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(8px); }
+  .logo { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--accent); letter-spacing: -0.5px; }
+  .logo span { color: var(--text); }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-actions { display: flex; gap: 0.75rem; align-items: center; }
+  .btn { padding: 0.55rem 1.2rem; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s; border: none; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-primary { background: var(--accent); color: #0a0e1a; font-weight: 700; }
+  .btn-primary:hover { background: #00ffb3; transform: translateY(-1px); }
+  .btn-danger { background: var(--danger); color: #fff; }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* HERO */
+  .hero { min-height: 88vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 3rem 2rem; position: relative; overflow: hidden; }
+  .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(0,229,160,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,160,0.04) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; }
+  .hero-glow { position: absolute; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(0,229,160,0.07) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,229,160,0.1); border: 1px solid rgba(0,229,160,0.25); border-radius: 99px; padding: 0.35rem 1rem; font-size: 0.8rem; color: var(--accent); font-weight: 500; margin-bottom: 1.5rem; }
+  .hero h1 { font-size: clamp(2.5rem, 7vw, 5rem); font-weight: 800; line-height: 1.1; letter-spacing: -2px; margin-bottom: 1.25rem; }
+  .hero h1 span { color: var(--accent); }
+  .hero p { font-size: 1.1rem; color: var(--muted); max-width: 500px; line-height: 1.7; margin-bottom: 2.5rem; }
+  .hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+  .btn-lg { padding: 0.85rem 2rem; font-size: 1rem; border-radius: 10px; }
+  .stats-row { display: flex; gap: 3rem; margin-top: 4rem; flex-wrap: wrap; justify-content: center; }
+  .stat { text-align: center; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--accent); }
+  .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+
+  /* FEATURES */
+  .section { padding: 5rem 2.5rem; max-width: 1200px; margin: 0 auto; }
+  .section-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -1px; text-align: center; margin-bottom: 0.5rem; }
+  .section-sub { text-align: center; color: var(--muted); margin-bottom: 3.5rem; font-size: 1rem; }
+  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+  .feature-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.75rem; transition: border-color 0.2s, transform 0.2s; }
+  .feature-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+  .feature-icon { width: 44px; height: 44px; border-radius: 10px; background: rgba(0,229,160,0.1); display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.3rem; }
+  .feature-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .feature-card p { font-size: 0.875rem; color: var(--muted); line-height: 1.6; }
+
+  /* MODAL OVERLAY */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--card); border: 1px solid var(--border); border-radius: 18px; width: 100%; max-width: 440px; padding: 2rem; position: relative; }
+  .modal h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 1.5rem; }
+  .modal-close { position: absolute; top: 1.25rem; right: 1.25rem; background: transparent; border: none; color: var(--muted); font-size: 1.25rem; cursor: pointer; line-height: 1; }
+  .modal-close:hover { color: var(--text); }
+  .form-group { margin-bottom: 1.1rem; }
+  .form-group label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.35rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input, .form-group select { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 0.9rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text); outline: none; transition: border-color 0.2s; }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+  .form-group select option { background: var(--bg2); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .modal-switch { text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--muted); }
+  .modal-switch a { color: var(--accent); cursor: pointer; text-decoration: none; }
+  .modal-switch a:hover { text-decoration: underline; }
+  .msg { padding: 0.6rem 0.9rem; border-radius: 7px; font-size: 0.85rem; margin-bottom: 1rem; display: none; }
+  .msg.success { background: rgba(0,229,160,0.1); color: var(--accent); border: 1px solid rgba(0,229,160,0.3); display: block; }
+  .msg.error { background: rgba(255,79,94,0.1); color: var(--danger); border: 1px solid rgba(255,79,94,0.3); display: block; }
+
+  /* BOOKING PAGE */
+  .booking-header { text-align: center; padding: 3rem 2rem 1rem; }
+  .booking-header h2 { font-size: 2rem; font-weight: 800; letter-spacing: -1px; }
+  .booking-header p { color: var(--muted); margin-top: 0.5rem; }
+  .booking-layout { display: grid; grid-template-columns: 320px 1fr; gap: 2rem; max-width: 1100px; margin: 0 auto; padding: 2rem 2rem 4rem; }
+  @media (max-width: 768px) { .booking-layout { grid-template-columns: 1fr; } }
+  .filter-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; height: fit-content; }
+  .filter-panel h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; }
+  .slots-panel h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+  .badge { padding: 0.2rem 0.65rem; border-radius: 99px; font-size: 0.75rem; font-weight: 600; }
+  .badge-green { background: rgba(0,229,160,0.15); color: var(--accent); }
+  .badge-red { background: rgba(255,79,94,0.15); color: var(--danger); }
+  .badge-yellow { background: rgba(255,179,0,0.15); color: var(--warn); }
+  .slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 0.75rem; margin-bottom: 2rem; }
+  .slot { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 10px; padding: 0.85rem 0.5rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .slot .slot-id { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+  .slot .slot-type { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+  .slot.available { border-color: rgba(0,229,160,0.3); }
+  .slot.available:hover { border-color: var(--accent); background: rgba(0,229,160,0.07); transform: scale(1.04); }
+  .slot.occupied { border-color: rgba(255,79,94,0.25); opacity: 0.5; cursor: not-allowed; }
+  .slot.occupied .slot-id { color: var(--danger); }
+  .slot.selected { border-color: var(--accent); background: rgba(0,229,160,0.12); }
+  .slot-legend { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 1.5rem; font-size: 0.8rem; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 5px; }
+  .legend-avail { background: rgba(0,229,160,0.5); }
+  .legend-occ { background: rgba(255,79,94,0.5); }
+  .legend-sel { background: var(--accent); }
+  .booking-summary { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; margin-top: 1rem; }
+  .booking-summary h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 1rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .summary-row { display: flex; justify-content: space-between; font-size: 0.875rem; padding: 0.35rem 0; border-bottom: 1px solid var(--border); }
+  .summary-row:last-child { border-bottom: none; font-weight: 700; color: var(--accent); }
+  .summary-row span:first-child { color: var(--muted); }
+
+  /* PAYMENT */
+  .payment-modal .card-row { display: flex; gap: 8px; align-items: center; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 0.9rem; margin-bottom: 1rem; }
+  .card-icon { font-size: 1.25rem; }
+  .card-input { flex: 1; background: transparent; border: none; outline: none; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text); }
+
+  /* DASHBOARD */
+  .dashboard { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+  .dashboard-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: gap; }
+  .dashboard-header h2 { font-size: 1.75rem; font-weight: 800; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .metric-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; }
+  .metric-card .metric-label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
+  .metric-card .metric-value { font-family: 'Syne', sans-serif; font-size: 2.2rem; font-weight: 800; }
+  .metric-card .metric-sub { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; }
+  .metric-card.green .metric-value { color: var(--accent); }
+  .metric-card.blue .metric-value { color: var(--accent2); }
+  .metric-card.red .metric-value { color: var(--danger); }
+  .metric-card.yellow .metric-value { color: var(--warn); }
+  .table-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .table-card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .table-card-header h3 { font-size: 1rem; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); font-weight: 600; padding: 0.85rem 1.5rem; text-align: left; background: var(--bg2); }
+  td { padding: 0.9rem 1.5rem; font-size: 0.875rem; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .status-pill { display: inline-flex; padding: 0.2rem 0.7rem; border-radius: 99px; font-size: 0.75rem; font-weight: 600; }
+  .status-active { background: rgba(0,229,160,0.12); color: var(--accent); }
+  .status-pending { background: rgba(255,179,0,0.12); color: var(--warn); }
+  .status-done { background: rgba(122,132,153,0.15); color: var(--muted); }
+
+  /* USER PROFILE */
+  .profile-page { max-width: 780px; margin: 0 auto; padding: 3rem 2rem; }
+  .profile-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; }
+  .avatar { width: 64px; height: 64px; border-radius: 50%; background: rgba(0,229,160,0.15); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--accent); }
+  .profile-info h3 { font-size: 1.2rem; font-weight: 700; }
+  .profile-info p { color: var(--muted); font-size: 0.875rem; margin-top: 2px; }
+  .bookings-list { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .bookings-list-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); font-weight: 700; }
+  .booking-item { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+  .booking-item:last-child { border-bottom: none; }
+  .booking-item-info h4 { font-size: 0.95rem; font-weight: 600; }
+  .booking-item-info p { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+  .booking-item-right { text-align: right; }
+  .booking-item-right .price { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--accent); font-size: 1rem; }
+  .booking-item-right .date { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--card); border: 1px solid var(--accent); border-radius: 10px; padding: 1rem 1.5rem; font-size: 0.9rem; z-index: 300; transform: translateY(100px); opacity: 0; transition: all 0.3s; max-width: 320px; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-title { font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+
+  /* PROGRESS */
+  .progress-bar { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; margin: 0.5rem 0; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.4s; }
+  .divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Park<span>Ease</span></div>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#" onclick="showPage('home')">Home</a></li>
+    <li><a href="#" onclick="showPage('booking')">Book Parking</a></li>
+    <li><a href="#" onclick="requireLogin('profile')">My Bookings</a></li>
+    <li><a href="#" onclick="requireLogin('admin')">Admin</a></li>
+  </ul>
+  <div class="nav-actions" id="navActions">
+    <button class="btn btn-ghost" onclick="openModal('loginModal')">Log In</button>
+    <button class="btn btn-primary" onclick="openModal('registerModal')">Sign Up</button>
+  </div>
+</nav>
+
+<!-- PAGES -->
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-badge">&#x2022; 500+ Parking Slots Available Now</div>
+    <h1>Smart Parking.<br><span>Zero Hassle.</span></h1>
+    <p>Book, pay and manage your parking spot in seconds. Real-time availability, instant confirmation.</p>
+    <div class="hero-cta">
+      <button class="btn btn-primary btn-lg" onclick="showPage('booking')">Reserve a Spot</button>
+      <button class="btn btn-ghost btn-lg" onclick="requireLogin('admin')">Admin Dashboard</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-num">500+</div><div class="stat-label">Parking Slots</div></div>
+      <div class="stat"><div class="stat-num">2min</div><div class="stat-label">Avg. Booking Time</div></div>
+      <div class="stat"><div class="stat-num">24/7</div><div class="stat-label">Availability</div></div>
+      <div class="stat"><div class="stat-num">99%</div><div class="stat-label">Uptime</div></div>
+    </div>
+  </section>
+  <div class="section">
+    <h2 class="section-title">Everything you need</h2>
+    <p class="section-sub">Designed to make parking effortless for drivers and operators.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">&#128663;</div>
+        <h3>Live Slot Availability</h3>
+        <p>See real-time slot status with instant updates — green, yellow, red at a glance.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#128197;</div>
+        <h3>Easy Reservations</h3>
+        <p>Pick your date, time and vehicle type. Book any slot in under 2 minutes.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#128179;</div>
+        <h3>Secure Payments</h3>
+        <p>Pay by card, wallet or UPI. All transactions encrypted and instantly confirmed.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">&#128202;</div>
+        <h3>Admin Dashboard</h3>
+        <p>Full control over bookings, revenue reports, slot management and user activity.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOOKING PAGE -->
+<div class="page" id="page-booking">
+  <div class="booking-header">
+    <h2>Reserve Your Parking Slot</h2>
+    <p>Select date, time and an available slot below</p>
+  </div>
+  <div class="booking-layout">
+    <!-- Filter Panel -->
+    <div>
+      <div class="filter-panel">
+        <h3>Booking Details</h3>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="bookDate" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>From</label>
+            <input type="time" id="bookFrom" value="09:00"/>
+          </div>
+          <div class="form-group">
+            <label>To</label>
+            <input type="time" id="bookTo" value="12:00"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Vehicle Type</label>
+          <select id="vehicleType">
+            <option>Car</option>
+            <option>Motorcycle</option>
+            <option>SUV / Truck</option>
+            <option>Electric Vehicle</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Floor / Zone</label>
+          <select id="floorZone" onchange="renderSlots()">
+            <option value="A">Zone A — Ground Floor</option>
+            <option value="B">Zone B — Level 1</option>
+            <option value="C">Zone C — Level 2</option>
+          </select>
+        </div>
+        <div class="divider"></div>
+        <div class="booking-summary" id="bookSummary" style="display:none">
+          <h4>Booking Summary</h4>
+          <div class="summary-row"><span>Slot</span><span id="sumSlot">—</span></div>
+          <div class="summary-row"><span>Zone</span><span id="sumZone">—</span></div>
+          <div class="summary-row"><span>Date</span><span id="sumDate">—</span></div>
+          <div class="summary-row"><span>Time</span><span id="sumTime">—</span></div>
+          <div class="summary-row"><span>Vehicle</span><span id="sumVehicle">—</span></div>
+          <div class="summary-row"><span>Duration</span><span id="sumDuration">—</span></div>
+          <div class="summary-row"><span>Total</span><span id="sumTotal">—</span></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:1rem;padding:0.75rem;" id="proceedBtn" onclick="proceedToPayment()" disabled>Select a Slot to Continue</button>
+      </div>
+    </div>
+    <!-- Slots Panel -->
+    <div class="slots-panel">
+      <h3>
+        <span id="zoneLabel">Zone A — Ground Floor</span>
+        <div style="display:flex;gap:0.5rem;">
+          <span class="badge badge-green" id="availCount">0 Available</span>
+          <span class="badge badge-red" id="occCount">0 Occupied</span>
+        </div>
+      </h3>
+      <div class="slot-legend">
+        <span><span class="legend-dot legend-avail"></span>Available</span>
+        <span><span class="legend-dot legend-occ"></span>Occupied</span>
+        <span><span class="legend-dot legend-sel"></span>Selected</span>
+      </div>
+      <div class="slot-grid" id="slotGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE PAGE -->
+<div class="page" id="page-profile">
+  <div class="profile-page">
+    <div class="profile-card">
+      <div class="avatar" id="profileAvatar">JD</div>
+      <div class="profile-info">
+        <h3 id="profileName">John Doe</h3>
+        <p id="profileEmail">john@example.com</p>
+        <p style="margin-top:6px;font-size:0.8rem;color:var(--accent);">&#9679; Active Member</p>
+      </div>
+      <button class="btn btn-ghost" style="margin-left:auto;" onclick="logout()">Log Out</button>
+    </div>
+    <div class="bookings-list">
+      <div class="bookings-list-header">My Bookings</div>
+      <div id="userBookingsList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PAGE -->
+<div class="page" id="page-admin">
+  <div class="dashboard">
+    <div class="dashboard-header">
+      <h2>Admin Dashboard</h2>
+      <button class="btn btn-ghost" onclick="logout()">Log Out</button>
+    </div>
+    <div class="metrics-grid">
+      <div class="metric-card green">
+        <div class="metric-label">Available Slots</div>
+        <div class="metric-value" id="metAvail">—</div>
+        <div class="metric-sub">of 48 total</div>
+      </div>
+      <div class="metric-card blue">
+        <div class="metric-label">Today's Bookings</div>
+        <div class="metric-value" id="metBookings">—</div>
+        <div class="metric-sub">reservations today</div>
+      </div>
+      <div class="metric-card yellow">
+        <div class="metric-label">Revenue Today</div>
+        <div class="metric-value" id="metRevenue">—</div>
+        <div class="metric-sub">in rupees</div>
+      </div>
+      <div class="metric-card red">
+        <div class="metric-label">Occupied Slots</div>
+        <div class="metric-value" id="metOcc">—</div>
+        <div class="metric-sub">currently in use</div>
+      </div>
+    </div>
+    <!-- Occupancy by zone -->
+    <div class="table-card" style="margin-bottom:1.5rem;">
+      <div class="table-card-header"><h3>Zone Occupancy</h3></div>
+      <div style="padding:1.5rem;" id="zoneOccupancy"></div>
+    </div>
+    <!-- Bookings table -->
+    <div class="table-card">
+      <div class="table-card-header">
+        <h3>All Bookings</h3>
+        <span class="badge badge-green" id="adminBookingCount">0 records</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Booking ID</th>
+              <th>User</th>
+              <th>Slot</th>
+              <th>Zone</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="adminTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+
+<!-- LOGIN -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('loginModal')">&#10005;</button>
+    <h2>Welcome back</h2>
+    <div class="msg" id="loginMsg"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="you@email.com"/></div>
+    <div class="form-group"><label>Password</label><input type="password" id="loginPass" placeholder="••••••••"/></div>
+    <button class="btn btn-primary" style="width:100%;padding:0.75rem;margin-top:0.5rem;" onclick="doLogin()">Log In</button>
+    <div class="modal-switch">Don't have an account? <a onclick="switchModal('loginModal','registerModal')">Sign up</a></div>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div class="modal-overlay" id="registerModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('registerModal')">&#10005;</button>
+    <h2>Create account</h2>
+    <div class="msg" id="regMsg"></div>
+    <div class="form-row">
+      <div class="form-group"><label>First Name</label><input type="text" id="regFirst" placeholder="John"/></div>
+      <div class="form-group"><label>Last Name</label><input type="text" id="regLast" placeholder="Doe"/></div>
+    </div>
+    <div class="form-group"><label>Email</label><input type="email" id="regEmail" placeholder="you@email.com"/></div>
+    <div class="form-group"><label>Password</label><input type="password" id="regPass" placeholder="Min 6 characters"/></div>
+    <div class="form-group">
+      <label>Role</label>
+      <select id="regRole">
+        <option value="user">Regular User</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:0.75rem;margin-top:0.5rem;" onclick="doRegister()">Create Account</button>
+    <div class="modal-switch">Already have an account? <a onclick="switchModal('registerModal','loginModal')">Log in</a></div>
+  </div>
+</div>
+
+<!-- PAYMENT -->
+<div class="modal-overlay" id="payModal">
+  <div class="modal payment-modal">
+    <button class="modal-close" onclick="closeModal('payModal')">&#10005;</button>
+    <h2>Payment</h2>
+    <div id="payDetails" style="background:var(--bg2);border-radius:8px;padding:1rem;margin-bottom:1.25rem;font-size:0.875rem;color:var(--muted);line-height:1.8;"></div>
+    <div class="form-group"><label>Name on Card</label><input type="text" id="cardName" placeholder="John Doe"/></div>
+    <div class="form-group">
+      <label>Card Number</label>
+      <div class="card-row">
+        <span class="card-icon">&#128179;</span>
+        <input class="card-input" id="cardNum" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCard(this)"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Expiry</label><input type="text" id="cardExp" placeholder="MM/YY" maxlength="5"/></div>
+      <div class="form-group"><label>CVV</label><input type="password" id="cardCvv" placeholder="•••" maxlength="3"/></div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:0.75rem;margin-top:0.5rem;" onclick="doPayment()">Pay Now</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-title" id="toastTitle">Success!</div>
+  <div id="toastBody"></div>
+</div>
+
+<script>
+// ---- STATE ----
+let currentUser = null;
+let selectedSlot = null;
+let bookings = [];
+let users = [
+  { id: 1, email: 'admin@park.com', password: 'admin123', name: 'Admin User', role: 'admin' },
+  { id: 2, email: 'user@park.com',  password: 'user123',  name: 'John Doe',   role: 'user'  }
+];
+
+// Slot occupancy data per zone
+const slotData = {
+  A: { total: 16, occupied: [2,5,8,12,14], label: 'Zone A — Ground Floor' },
+  B: { total: 16, occupied: [1,3,7,9,11,15,16], label: 'Zone B — Level 1' },
+  C: { total: 16, occupied: [4,6,10,13], label: 'Zone C — Level 2' }
+};
+
+const rates = { Car: 60, Motorcycle: 30, 'SUV / Truck': 90, 'Electric Vehicle': 50 };
+
+// Pre-populate some bookings
+bookings = [
+  { id: 'BK001', userId: 2, slot: 'A-03', zone: 'Zone A', date: '2025-08-10', from: '09:00', to: '12:00', vehicle: 'Car', amount: 180, status: 'active' },
+  { id: 'BK002', userId: 2, slot: 'B-06', zone: 'Zone B', date: '2025-08-08', from: '14:00', to: '16:00', vehicle: 'Motorcycle', amount: 60, status: 'done' }
+];
+
+// Set default date
+document.getElementById('bookDate').valueAsDate = new Date();
+
+// ---- NAVIGATION ----
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (name === 'booking') renderSlots();
+  if (name === 'admin') renderAdmin();
+  if (name === 'profile') renderProfile();
+  window.scrollTo(0,0);
+}
+
+function requireLogin(page) {
+  if (!currentUser) { openModal('loginModal'); pendingPage = page; return; }
+  if (page === 'admin' && currentUser.role !== 'admin') {
+    showToast('Access Denied', 'Admin privileges required.'); return;
+  }
+  showPage(page);
+}
+let pendingPage = null;
+
+// ---- MODALS ----
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function switchModal(from, to) { closeModal(from); openModal(to); }
+
+// ---- AUTH ----
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const user = users.find(u => u.email === email && u.password === pass);
+  const msgEl = document.getElementById('loginMsg');
+  if (!user) {
+    msgEl.className = 'msg error'; msgEl.textContent = 'Invalid email or password.'; return;
+  }
+  currentUser = user;
+  closeModal('loginModal');
+  updateNav();
+  showToast('Welcome back!', 'Logged in as ' + user.name);
+  if (pendingPage) { const p = pendingPage; pendingPage = null; requireLogin(p); }
+}
+
+function doRegister() {
+  const first = document.getElementById('regFirst').value.trim();
+  const last  = document.getElementById('regLast').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPass').value;
+  const role  = document.getElementById('regRole').value;
+  const msgEl = document.getElementById('regMsg');
+  if (!first || !last || !email || !pass) {
+    msgEl.className = 'msg error'; msgEl.textContent = 'All fields are required.'; return;
+  }
+  if (pass.length < 6) {
+    msgEl.className = 'msg error'; msgEl.textContent = 'Password must be at least 6 characters.'; return;
+  }
+  if (users.find(u => u.email === email)) {
+    msgEl.className = 'msg error'; msgEl.textContent = 'Email already registered.'; return;
+  }
+  const newUser = { id: Date.now(), email, password: pass, name: first + ' ' + last, role };
+  users.push(newUser);
+  currentUser = newUser;
+  closeModal('registerModal');
+  updateNav();
+  showToast('Account created!', 'Welcome, ' + first + '!');
+}
+
+function logout() {
+  currentUser = null;
+  updateNav();
+  showPage('home');
+  showToast('Logged out', 'See you next time!');
+}
+
+function updateNav() {
+  const actions = document.getElementById('navActions');
+  if (currentUser) {
+    actions.innerHTML = `<span style="font-size:0.875rem;color:var(--muted);">${currentUser.name}</span>
+      <button class="btn btn-ghost" onclick="requireLogin('profile')">My Bookings</button>
+      <button class="btn btn-primary" onclick="logout()">Log Out</button>`;
+  } else {
+    actions.innerHTML = `<button class="btn btn-ghost" onclick="openModal('loginModal')">Log In</button>
+      <button class="btn btn-primary" onclick="openModal('registerModal')">Sign Up</button>`;
+  }
+}
+
+// ---- SLOTS ----
+function renderSlots() {
+  const zone = document.getElementById('floorZone').value;
+  const data = slotData[zone];
+  document.getElementById('zoneLabel').textContent = data.label;
+  const grid = document.getElementById('slotGrid');
+  grid.innerHTML = '';
+  let avail = 0, occ = 0;
+  for (let i = 1; i <= data.total; i++) {
+    const isOcc = data.occupied.includes(i);
+    const id = zone + '-' + String(i).padStart(2,'0');
+    const div = document.createElement('div');
+    div.className = 'slot ' + (isOcc ? 'occupied' : 'available');
+    div.dataset.id = id;
+    div.innerHTML = `<div class="slot-id">${id}</div><div class="slot-type">${isOcc ? 'Occupied' : 'Free'}</div>`;
+    if (!isOcc) {
+      div.onclick = () => selectSlot(id, div);
+      avail++;
+    } else { occ++; }
+    grid.appendChild(div);
+  }
+  document.getElementById('availCount').textContent = avail + ' Available';
+  document.getElementById('occCount').textContent = occ + ' Occupied';
+  selectedSlot = null;
+  document.getElementById('bookSummary').style.display = 'none';
+  document.getElementById('proceedBtn').disabled = true;
+  document.getElementById('proceedBtn').textContent = 'Select a Slot to Continue';
+}
+
+function selectSlot(id, el) {
+  document.querySelectorAll('.slot.selected').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedSlot = id;
+  updateSummary();
+}
+
+function updateSummary() {
+  if (!selectedSlot) return;
+  const date  = document.getElementById('bookDate').value || 'Not set';
+  const from  = document.getElementById('bookFrom').value;
+  const to    = document.getElementById('bookTo').value;
+  const veh   = document.getElementById('vehicleType').value;
+  const zone  = document.getElementById('floorZone').options[document.getElementById('floorZone').selectedIndex].text;
+  const dur   = calcDuration(from, to);
+  const rate  = rates[veh] || 60;
+  const total = Math.max(0, dur) * rate;
+  document.getElementById('sumSlot').textContent    = selectedSlot;
+  document.getElementById('sumZone').textContent    = zone;
+  document.getElementById('sumDate').textContent    = date;
+  document.getElementById('sumTime').textContent    = from + ' – ' + to;
+  document.getElementById('sumVehicle').textContent = veh;
+  document.getElementById('sumDuration').textContent= dur + ' hr' + (dur !== 1 ? 's' : '');
+  document.getElementById('sumTotal').textContent   = '₹' + total;
+  document.getElementById('bookSummary').style.display = 'block';
+  document.getElementById('proceedBtn').disabled = false;
+  document.getElementById('proceedBtn').textContent = 'Proceed to Payment  →';
+}
+
+function calcDuration(from, to) {
+  const [fh, fm] = from.split(':').map(Number);
+  const [th, tm] = to.split(':').map(Number);
+  return Math.max(0, Math.round((th*60+tm - fh*60-fm) / 60));
+}
+
+// ---- PAYMENT ----
+function proceedToPayment() {
+  if (!currentUser) { openModal('loginModal'); pendingPage = 'pay'; return; }
+  if (!selectedSlot) return;
+  const date = document.getElementById('bookDate').value;
+  const from = document.getElementById('bookFrom').value;
+  const to   = document.getElementById('bookTo').value;
+  const veh  = document.getElementById('vehicleType').value;
+  const dur  = calcDuration(from, to);
+  const rate = rates[veh] || 60;
+  const total= Math.max(0, dur) * rate;
+  document.getElementById('payDetails').innerHTML =
+    `Slot: <strong style="color:var(--text)">${selectedSlot}</strong> &nbsp;|&nbsp; ${date} &nbsp;|&nbsp; ${from} – ${to}<br>Vehicle: ${veh} &nbsp;|&nbsp; ${dur} hr(s) @ ₹${rate}/hr<br><strong style="color:var(--accent);font-size:1rem;">Total: ₹${total}</strong>`;
+  openModal('payModal');
+}
+
+function formatCard(input) {
+  let v = input.value.replace(/\D/g,'').substring(0,16);
+  input.value = v.replace(/(.{4})/g,'$1 ').trim();
+}
+
+function doPayment() {
+  const name = document.getElementById('cardName').value.trim();
+  const num  = document.getElementById('cardNum').value.replace(/\s/g,'');
+  const exp  = document.getElementById('cardExp').value;
+  const cvv  = document.getElementById('cardCvv').value;
+  if (!name || num.length < 16 || !exp || cvv.length < 3) {
+    showToast('Incomplete', 'Please fill in all card details.'); return;
+  }
+  // Simulate booking
+  const date = document.getElementById('bookDate').value;
+  const from = document.getElementById('bookFrom').value;
+  const to   = document.getElementById('bookTo').value;
+  const veh  = document.getElementById('vehicleType').value;
+  const zone = document.getElementById('floorZone').options[document.getElementById('floorZone').selectedIndex].text;
+  const dur  = calcDuration(from, to);
+  const total= Math.max(0, dur) * (rates[veh] || 60);
+  const bk = {
+    id: 'BK' + String(bookings.length + 1).padStart(3,'0'),
+    userId: currentUser.id,
+    slot: selectedSlot,
+    zone: zone.split('—')[0].trim(),
+    date, from, to,
+    vehicle: veh,
+    amount: total,
+    status: 'active'
+  };
+  bookings.push(bk);
+  // Mark slot occupied
+  const zoneKey = selectedSlot.split('-')[0];
+  const slotNum = parseInt(selectedSlot.split('-')[1]);
+  if (!slotData[zoneKey].occupied.includes(slotNum)) slotData[zoneKey].occupied.push(slotNum);
+  closeModal('payModal');
+  showToast('Booking Confirmed! 🎉', `Slot ${selectedSlot} reserved. Booking ID: ${bk.id}`);
+  selectedSlot = null;
+  renderSlots();
+}
+
+// ---- PROFILE ----
+function renderProfile() {
+  if (!currentUser) return;
+  const initials = currentUser.name.split(' ').map(n=>n[0]).join('').toUpperCase();
+  document.getElementById('profileAvatar').textContent = initials;
+  document.getElementById('profileName').textContent   = currentUser.name;
+  document.getElementById('profileEmail').textContent  = currentUser.email;
+  const myBookings = bookings.filter(b => b.userId === currentUser.id);
+  const list = document.getElementById('userBookingsList');
+  if (myBookings.length === 0) {
+    list.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--muted);">No bookings yet. <a href="#" onclick="showPage(\'booking\')" style="color:var(--accent)">Book your first slot →</a></div>';
+    return;
+  }
+  list.innerHTML = myBookings.reverse().map(b => `
+    <div class="booking-item">
+      <div class="booking-item-info">
+        <h4>Slot ${b.slot} — ${b.zone}</h4>
+        <p>${b.vehicle} &nbsp;|&nbsp; ${b.from} – ${b.to}</p>
+      </div>
+      <div style="text-align:center;">
+        <span class="status-pill ${b.status === 'active' ? 'status-active' : 'status-done'}">${b.status}</span>
+      </div>
+      <div class="booking-item-right">
+        <div class="price">₹${b.amount}</div>
+        <div class="date">${b.date}</div>
+        <div style="font-size:0.75rem;color:var(--muted);">${b.id}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ---- ADMIN ----
+function renderAdmin() {
+  const occupied = Object.values(slotData).reduce((a,z)=>a+z.occupied.length,0);
+  const total    = Object.values(slotData).reduce((a,z)=>a+z.total,0);
+  const avail    = total - occupied;
+  const rev      = bookings.reduce((a,b)=>a+b.amount,0);
+  document.getElementById('metAvail').textContent    = avail;
+  document.getElementById('metBookings').textContent = bookings.length;
+  document.getElementById('metRevenue').textContent  = '₹'+rev;
+  document.getElementById('metOcc').textContent      = occupied;
+  // Zone occupancy
+  const zoHtml = Object.entries(slotData).map(([k,d]) => {
+    const pct = Math.round(d.occupied.length / d.total * 100);
+    return `<div style="margin-bottom:1rem;">
+      <div style="display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:4px;">
+        <span>${d.label}</span><span style="color:var(--muted)">${d.occupied.length}/${d.total} slots</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('zoneOccupancy').innerHTML = zoHtml;
+  // Bookings table
+  document.getElementById('adminBookingCount').textContent = bookings.length + ' records';
+  const tbody = document.getElementById('adminTable');
+  tbody.innerHTML = bookings.length === 0
+    ? '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem;">No bookings yet.</td></tr>'
+    : [...bookings].reverse().map(b => {
+        const user = users.find(u => u.id === b.userId);
+        return `<tr>
+          <td style="font-weight:600;color:var(--accent)">${b.id}</td>
+          <td>${user ? user.name : 'Unknown'}</td>
+          <td>${b.slot}</td>
+          <td>${b.zone}</td>
+          <td>${b.date}</td>
+          <td>${b.from} – ${b.to}</td>
+          <td style="font-weight:600">₹${b.amount}</td>
+          <td><span class="status-pill ${b.status === 'active' ? 'status-active' : b.status === 'pending' ? 'status-pending' : 'status-done'}">${b.status}</span></td>
+        </tr>`;
+      }).join('');
+}
+
+// ---- TOAST ----
+function showToast(title, body) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastBody').textContent  = body;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// Init slots
+renderSlots();
+</script>
+</body>
+</html>
